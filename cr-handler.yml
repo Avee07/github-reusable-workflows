@@ -1,0 +1,24 @@
+name: CR Handler
+
+on:
+  workflow_call:
+    inputs:
+      site:
+        required: true
+        type: string
+      subnet_info:
+        required: true
+        type: string
+      state:
+        required: true
+        type: string
+
+jobs:
+  cr_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run CR Handler
+        run: |
+          echo "Site: ${{ inputs.site }}"
+          echo "Subnet Info: ${{ inputs.subnet_info }}"
+          echo "State: ${{ inputs.state }}"
