@@ -34,22 +34,14 @@ jobs:
         with:
           repository: ${{ github.repository }}
           token: ${{ secrets.token }}
-          path: main-repo  # This checks out the repo into `main-repo`
-
-      - name: Set working directory to main repo
-        run: |
-          echo "Main repo checked out"
-        working-directory: main-repo  # This ensures that all commands run from the `main-repo`
 
       - name: Setup Python and install requirements
         run: |
-          cd main-repo  # Ensure you're in the correct directory
           python3 -m pip install --upgrade pip
           pip3 install -r requirements.txt
 
       - name: Generate mock inventories and files
         run: |
-          cd main-repo  # Ensure you're in the correct directory
           echo "SITE: $SITE"
           echo "SUBNET_INFO: $SUBNET_INFO"
           export ANSIBLE_INVENTORY="/mock-data/common/inventory,/mock-data/$SITE/inventory"
@@ -60,7 +52,6 @@ jobs:
 
       - name: Run change request script
         run: |
-          cd main-repo  # Ensure you're in the correct directory
           if [[ "$STATE" == "create" ]]; then
             python3 mock_utils/mock_handle_cr.py --state create
           elif [[ "$STATE" == "implement" ]]; then
@@ -77,6 +68,6 @@ jobs:
         with:
           name: cr-${{ inputs.state }}-${{ inputs.site }}
           path: |
-            main-repo/mock_host_list.csv
-            main-repo/mock_CHANGE_NUMBER.txt
+            mock_host_list.csv
+            mock_CHANGE_NUMBER.txt
           if-no-files-found: ignore
