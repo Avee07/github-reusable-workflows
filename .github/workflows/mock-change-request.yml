@@ -15,6 +15,9 @@ on:
       close_code:
         required: false
         type: string
+    secrets:
+      token:
+        required: true
 
 jobs:
   mock-change-request:
@@ -26,21 +29,27 @@ jobs:
       CLOSE_CODE: ${{ inputs.close_code }}
 
     steps:
-      - name: Checkout calling repo
+      - name: Checkout calling repo (main repo)
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.token }}
+          path: main-repo
+
+      - name: Set working directory to main repo
+        run: |
+          echo "Main repo checked out"
+        working-directory: main-repo
 
       - name: Setup Python and install requirements
         run: |
-          sudo apt update
-          sudo apt install -y jq
+          cd main-repo
           python3 -m pip install --upgrade pip
           pip3 install -r requirements.txt
 
       - name: Generate mock inventories and files
         run: |
+          cd main-repo
           echo "SITE: $SITE"
           echo "SUBNET_INFO: $SUBNET_INFO"
           export ANSIBLE_INVENTORY="/mock-data/common/inventory,/mock-data/$SITE/inventory"
@@ -51,6 +60,7 @@ jobs:
 
       - name: Run change request script
         run: |
+          cd main-repo
           if [[ "$STATE" == "create" ]]; then
             python3 mock_utils/mock_handle_cr.py --state create
           elif [[ "$STATE" == "implement" ]]; then
@@ -67,6 +77,6 @@ jobs:
         with:
           name: cr-${{ inputs.state }}-${{ inputs.site }}
           path: |
-            mock_host_list.csv
-            mock_CHANGE_NUMBER.txt
+            main-repo/mock_host_list.csv
+            main-repo/mock_CHANGE_NUMBER.txt
           if-no-files-found: ignore
