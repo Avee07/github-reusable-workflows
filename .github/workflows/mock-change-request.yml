@@ -7,7 +7,7 @@ on:
         required: true
         type: string
       subnet_info:
-        required: true
+        required: false
         type: string
       state:
         required: true
@@ -74,6 +74,11 @@ jobs:
             echo "Invalid state"
             exit 1
           fi
+
+      - name: List specific files
+        run: |
+          echo "Listing host list and change number files:"
+          ls mock_host_list.csv mock_CHANGE_NUMBER.txt
 
       - name: Upload CR artifacts (only for create)
         if: ${{ inputs.state == 'create' }}
