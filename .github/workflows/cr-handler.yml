@@ -12,6 +12,10 @@ on:
       state:
         required: true
         type: string
+      script_path:
+        required: true
+        type: string
+
 
 jobs:
   cr_job:
@@ -22,3 +26,21 @@ jobs:
           echo "Site: ${{ inputs.site }}"
           echo "Subnet Info: ${{ inputs.subnet_info }}"
           echo "State: ${{ inputs.state }}"
+
+      - name: Checkout calling repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.repository.full_name }}
+          ref: ${{ github.ref }}
+  
+      - name: Verify script exists
+        run: |
+          if [ ! -f "${{ inputs.script_path }}" ]; then
+            echo "Script not found: ${{ inputs.script_path }}"
+            exit 1
+          fi
+  
+      - name: Run the Python script
+        run: |
+          echo "Running script: ${{ inputs.script_path }}"
+          python3 "${{ inputs.script_path }}"
