@@ -38,7 +38,7 @@ jobs:
       - name: List files after checkout
         run: |
           echo "Listing files after checkout"
-          ls -R # Recursively list all files and directories
+          ls -R
 
       - name: Setup Python and install requirements
         run: |
@@ -46,6 +46,7 @@ jobs:
           pip3 install -r requirements.txt
 
       - name: Generate mock inventories and files
+        if: ${{ inputs.state == 'create' }}
         run: |
           echo "SITE: $SITE"
           echo "SUBNET_INFO: $SUBNET_INFO"
@@ -54,6 +55,12 @@ jobs:
           echo "CI Name" > hosts.csv
           cat hostlist.txt >> hosts.csv
           sed 's/$/,/' hosts.csv > mock_host_list.csv
+
+      - name: Download CR artifacts (for implement or close)
+        if: ${{ inputs.state != 'create' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: cr-create-${{ inputs.site }}
 
       - name: Run change request script
         run: |
@@ -68,10 +75,11 @@ jobs:
             exit 1
           fi
 
-      - name: Upload artifacts
+      - name: Upload CR artifacts (only for create)
+        if: ${{ inputs.state == 'create' }}
         uses: actions/upload-artifact@v4
         with:
-          name: cr-${{ inputs.state }}-${{ inputs.site }}
+          name: cr-create-${{ inputs.site }}
           path: |
             mock_host_list.csv
             mock_CHANGE_NUMBER.txt
