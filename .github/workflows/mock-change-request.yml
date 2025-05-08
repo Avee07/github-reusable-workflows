@@ -29,58 +29,85 @@ jobs:
       CLOSE_CODE: ${{ inputs.close_code }}
 
     steps:
-      - name: Checkout calling repo (main repo)
+      - name: Checkout Main Repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository }}
           token: ${{ secrets.token }}
 
-      - name: List files after checkout
+      - name: Setup Python and System Dependencies
         run: |
-          echo "Listing files after checkout"
-          ls -R
+          echo "Installing system dependencies..."
+          if command -v apt-get &>/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y jq python3-pip
+          elif command -v yum &>/dev/null; then
+            sudo yum install -y epel-release
+            sudo yum install -y jq python3-pip
+          else
+            echo "Unknown package manager" && exit 1
+          fi
 
-      - name: Setup Python and install requirements
-        run: |
+          echo "Upgrading pip and installing Python requirements..."
           python3 -m pip install --upgrade pip
           pip3 install -r requirements.txt
 
-      - name: Generate mock inventories and files
+      - name: Prepare Inputs (Create)
         if: ${{ inputs.state == 'create' }}
         run: |
-          echo "SITE: $SITE"
-          echo "SUBNET_INFO: $SUBNET_INFO"
+          echo "Preparing inventories for site: $SITE"
           export ANSIBLE_INVENTORY="/mock-data/common/inventory,/mock-data/$SITE/inventory"
           echo -e "host1\nhost2" > hostlist.txt
           echo "CI Name" > hosts.csv
           cat hostlist.txt >> hosts.csv
           sed 's/$/,/' hosts.csv > mock_host_list.csv
 
-      - name: Download CR artifacts (for implement or close)
+      - name: Download CR Artifacts (Implement/Close)
         if: ${{ inputs.state != 'create' }}
         uses: actions/download-artifact@v4
         with:
           name: cr-create-${{ inputs.site }}
 
-      - name: Run change request script
+      - name: Run Change Request Logic
         run: |
-          if [[ "$STATE" == "create" ]]; then
-            python3 ./mock_utils/mock_handle_cr.py --state create
-          elif [[ "$STATE" == "implement" ]]; then
-            python3 ./mock_utils/mock_handle_cr.py --state implement
-          elif [[ "$STATE" == "close" ]]; then
-            python3 ./mock_utils/mock_handle_cr.py --state close --close_code "$CLOSE_CODE"
+          case "$STATE" in
+            create)
+              python3 ./mock_utils/mock_handle_cr.py --state create
+              ;;
+            implement)
+              python3 ./mock_utils/mock_handle_cr.py --state implement
+              ;;
+            close)
+              python3 ./mock_utils/mock_handle_cr.py --state close --close_code "$CLOSE_CODE"
+              ;;
+            *)
+              echo "Invalid state: $STATE" && exit 1
+              ;;
+          esac
+
+      - name: Set Environment Variables
+        run: |
+          echo "MOCK_ANSIBLE_FORCE_COLOR=0" >> $GITHUB_ENV
+          echo "MOCK_ANSIBLE_INVENTORY=/mock-data/common/inventory" >> $GITHUB_ENV
+          echo "MOCK_HOST_ENDPOINT=mock-host-endpoint" >> $GITHUB_ENV
+          echo "MOCK_ACCESS_KEY=mock-access-key" >> $GITHUB_ENV
+          echo "MOCK_SECRET_KEY=mock-secret-key" >> $GITHUB_ENV
+
+      - name: Determine Cloud and Export
+        run: |
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            cloud="mock-cloud-rcdn-1-cephs3"
           else
-            echo "Invalid state"
-            exit 1
+            cloud="mock-cloud-svldev-1-cephs3"
           fi
+          echo "Mock cloud: $cloud"
+          echo "MOCK_CLOUD=$cloud" >> $GITHUB_ENV
 
-      - name: List specific files
+      - name: List Generated Files
         run: |
-          echo "Listing host list and change number files:"
-          ls mock_host_list.csv mock_CHANGE_NUMBER.txt
+          echo "Generated Files:"
+          ls -l mock_host_list.csv mock_CHANGE_NUMBER.txt || echo "Files not found"
 
-      - name: Upload CR artifacts (only for create)
+      - name: Upload CR Artifacts (Create)
         if: ${{ inputs.state == 'create' }}
         uses: actions/upload-artifact@v4
         with:
