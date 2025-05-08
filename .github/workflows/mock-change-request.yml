@@ -53,11 +53,11 @@ jobs:
       - name: Run change request script
         run: |
           if [[ "$STATE" == "create" ]]; then
-            python3 mock_utils/mock_handle_cr.py --state create
+            python3 ./mock_utils/mock_handle_cr.py --state create
           elif [[ "$STATE" == "implement" ]]; then
-            python3 mock_utils/mock_handle_cr.py --state implement
+            python3 ./mock_utils/mock_handle_cr.py --state implement
           elif [[ "$STATE" == "close" ]]; then
-            python3 mock_utils/mock_handle_cr.py --state close --close_code "$CLOSE_CODE"
+            python3 ./mock_utils/mock_handle_cr.py --state close --close_code "$CLOSE_CODE"
           else
             echo "Invalid state"
             exit 1
