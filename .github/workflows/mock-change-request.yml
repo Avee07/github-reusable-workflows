@@ -1,0 +1,72 @@
+name: Mock Change Request Workflow
+
+on:
+  workflow_call:
+    inputs:
+      site:
+        required: true
+        type: string
+      subnet_info:
+        required: true
+        type: string
+      state:
+        required: true
+        type: string
+      close_code:
+        required: false
+        type: string
+
+jobs:
+  mock-change-request:
+    runs-on: ubuntu-latest
+    env:
+      SITE: ${{ inputs.site }}
+      SUBNET_INFO: ${{ inputs.subnet_info }}
+      STATE: ${{ inputs.state }}
+      CLOSE_CODE: ${{ inputs.close_code }}
+
+    steps:
+      - name: Checkout calling repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python and install requirements
+        run: |
+          sudo apt update
+          sudo apt install -y jq
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt
+
+      - name: Generate mock inventories and files
+        run: |
+          echo "SITE: $SITE"
+          echo "SUBNET_INFO: $SUBNET_INFO"
+          export ANSIBLE_INVENTORY="/mock-data/common/inventory,/mock-data/$SITE/inventory"
+          echo -e "host1\nhost2" > hostlist.txt
+          echo "CI Name" > hosts.csv
+          cat hostlist.txt >> hosts.csv
+          sed 's/$/,/' hosts.csv > mock_host_list.csv
+
+      - name: Run change request script
+        run: |
+          if [[ "$STATE" == "create" ]]; then
+            python3 mock_utils/mock_handle_cr.py --state create
+          elif [[ "$STATE" == "implement" ]]; then
+            python3 mock_utils/mock_handle_cr.py --state implement
+          elif [[ "$STATE" == "close" ]]; then
+            python3 mock_utils/mock_handle_cr.py --state close --close_code "$CLOSE_CODE"
+          else
+            echo "Invalid state"
+            exit 1
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cr-${{ inputs.state }}-${{ inputs.site }}
+          path: |
+            mock_host_list.csv
+            mock_CHANGE_NUMBER.txt
+          if-no-files-found: ignore
