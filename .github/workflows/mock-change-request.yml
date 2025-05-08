@@ -104,8 +104,21 @@ jobs:
 
       - name: List Generated Files
         run: |
-          echo "Generated Files:"
-          ls -l mock_host_list.csv mock_CHANGE_NUMBER.txt || echo "Files not found"
+            echo "Generated Files:"
+            if [[ -f mock_host_list.csv ]]; then
+              echo "--- mock_host_list.csv ---"
+              cat mock_host_list.csv
+            else
+              echo "mock_host_list.csv not found"
+            fi
+        
+            if [[ -f mock_CHANGE_NUMBER.txt ]]; then
+              echo "--- mock_CHANGE_NUMBER.txt ---"
+              cat mock_CHANGE_NUMBER.txt
+            else
+              echo "mock_CHANGE_NUMBER.txt not found"
+            fi
+        
 
       - name: Upload CR Artifacts (Create)
         if: ${{ inputs.state == 'create' }}
