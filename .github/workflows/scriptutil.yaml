@@ -6,6 +6,12 @@ on:
       site:
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      site:
+        description: "enter"
+        required: true
+        type: string
 
 jobs:
   run-script:
