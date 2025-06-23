@@ -17,14 +17,18 @@ jobs:
   run-script:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout reusable repo (Avee07/github-reusable-workflows)
         uses: actions/checkout@v4
+        with:
+          repository: Avee07/github-reusable-workflows
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: List current directory
+      - name: List files (for debug)
         run: ls -R
 
       - name: Make script executable
-        run: chmod +x utils/my-scripts.sh
+        run: chmod +x utils/my-script.sh
 
-      - name: Run utils/my-script.sh with site input
-        run: ./utils/my-scripts.sh "${{ inputs.site }}"
+      - name: Run script with input
+        run: ./utils/my-script.sh "${{ inputs.site }}"
