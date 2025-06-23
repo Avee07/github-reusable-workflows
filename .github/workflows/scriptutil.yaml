@@ -24,7 +24,7 @@ jobs:
         run: ls -R
 
       - name: Make script executable
-        run: chmod +x utils/my-script.sh
+        run: chmod +x utils/my-scripts.sh
 
       - name: Run utils/my-script.sh with site input
         run: ./utils/my-script.sh "${{ inputs.site }}"
