@@ -1,0 +1,21 @@
+name: Reusable Run Script
+
+on:
+  workflow_call:
+    inputs:
+      site:
+        required: true
+        type: string
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Make script executable
+        run: chmod +x utils/my-script.sh
+
+      - name: Run utils/my-script.sh with site input
+        run: ./utils/my-script.sh "${{ inputs.site }}"
