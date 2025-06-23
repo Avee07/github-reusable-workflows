@@ -27,4 +27,4 @@ jobs:
         run: chmod +x utils/my-scripts.sh
 
       - name: Run utils/my-script.sh with site input
-        run: ./utils/my-script.sh "${{ inputs.site }}"
+        run: ./utils/my-scripts.sh "${{ inputs.site }}"
