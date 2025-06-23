@@ -20,6 +20,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: List current directory
+        run: ls -R
+
       - name: Make script executable
         run: chmod +x utils/my-script.sh
 
